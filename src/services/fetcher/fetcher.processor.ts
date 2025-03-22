@@ -71,14 +71,13 @@ export class FetcherProcessor extends WorkerHost {
 
     async process(job: Job<any, any, string>): Promise<any> {
         await this.acquireToken();
-        this.logger.log(`Processing job ${job.id}`);
         const { productId, date } = job.data;
-        await this.fetchAndStoreInventory(productId, date);
+        await this.fetchAndStoreInventory(parseInt(productId), date);
     }
 
     private async fetchAndStoreInventory(productId: number, date: string): Promise<void> {
         try {
-            const url = `${this.baseUrl}/ep1`;
+            const url = `${this.baseUrl}/${productId}?date=${date}`;
             const response = await fetch(url, {
                 headers: {
                     'x-api-key': `${this.apiKey}`,
@@ -89,8 +88,8 @@ export class FetcherProcessor extends WorkerHost {
                 throw new Error(`Failed to fetch inventory for product ${productId}, date ${date}`);
             }
 
-            // const slots = await response.json() as Slot[];
-            // await this.processInventoryData(productId, date, slots);
+            const slots = await response.json() as Slot[];
+            await this.processInventoryData(productId, date, slots);
         } catch (error) {
             this.logger.error(`Error fetching inventory for product ${productId}, date ${date}`, error);
         }
