@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DaysInWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model Product {
+  id                   Int             @id
+  hasMultipleTimeSlots Boolean         @default(false)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  availableDates       AvailableDate[]
+  timeSlots            TimeSlot[]
+  paxTypes             PaxType[]
+  availableDaysOfWeek  DaysInWeek[]    @default([])
+}
+
+model AvailableDate {
+  id                     Int                    @id @default(autoincrement())
+  date                   DateTime
+  productId              Int
+  originalPrice          Float
+  finalPrice             Float
+  currencyCode           String                 @default("USD")
+  lastUpdated            DateTime               @default(now())
+  timeSlotAvailabilities TimeSlotAvailability[]
+  product                Product                @relation(fields: [productId], references: [id])
+
+  @@unique([productId, date], name: "unique_product_date")
+  @@index([date])
+}
+
+model TimeSlot {
+  id             Int                    @id @default(autoincrement())
+  productId      Int
+  startTime      String
+  endTime        String
+  availabilities TimeSlotAvailability[]
+  product        Product                @relation(fields: [productId], references: [id])
+
+  @@unique([productId, startTime], name: "unique_product_timeslot")
+}
+
+model TimeSlotAvailability {
+  id                Int               @id @default(autoincrement())
+  availableDateId   Int
+  timeSlotId        Int
+  originalPrice     Float
+  finalPrice        Float
+  currencyCode      String            @default("USD")
+  remaining         Int
+  paxAvailabilities PaxAvailability[]
+  availableDate     AvailableDate     @relation(fields: [availableDateId], references: [id])
+  timeSlot          TimeSlot          @relation(fields: [timeSlotId], references: [id])
+
+  @@unique([availableDateId, timeSlotId], name: "unique_availableDate_timeSlot")
+}
+
+model PaxType {
+  id             Int               @id @default(autoincrement())
+  productId      Int
+  type           String
+  name           String?
+  description    String?
+  minQuantity    Int?
+  maxQuantity    Int?
+  availabilities PaxAvailability[]
+  product        Product           @relation(fields: [productId], references: [id])
+
+  @@unique([productId, type], name: "unique_product_pax_type")
+}
+
+model PaxAvailability {
+  id                     Int                  @id @default(autoincrement())
+  timeSlotAvailabilityId Int
+  paxTypeId              Int
+  originalPrice          Float
+  finalPrice             Float
+  currencyCode           String               @default("USD")
+  remaining              Int
+  timeSlotAvailability   TimeSlotAvailability @relation(fields: [timeSlotAvailabilityId], references: [id])
+  paxType                PaxType              @relation(fields: [paxTypeId], references: [id])
+
+  @@unique([timeSlotAvailabilityId, paxTypeId], name: "unique_timeSlotAvailability_paxType")
+}
+
+enum FetchTypes {
+  TODAY
+  DAYS_7
+  DAYS_30
+}
+
+model FetchTracker {
+  id          Int        @id @default(autoincrement())
+  fetchType   FetchTypes @unique
+  lastFetched DateTime
+}
