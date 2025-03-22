@@ -23,3 +23,12 @@ export interface Slot {
     remaining: number;
     paxAvailability: Array<PaxAvailability>;
 }
+
+export interface DateAvailability {
+    date: string;
+    price: Price;
+}
+
+export interface DateInventory {
+    dates: Array<DateAvailability>;
+}

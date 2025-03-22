@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { Slots } from './experience.interface';
+import { DateInventory, Slots } from './experience.interface';
+import { FetcherService } from '../fetcher/fetcher.service';
 
 @Injectable()
 export class ExperienceService {
-    constructor(private readonly dbService: DbService) {}
+    constructor(private readonly dbService: DbService, private readonly fetcher: FetcherService) { }
+
     async getSlotsForProductWithDate(id: string, date: string): Promise<Slots> {
         const slots = await this.dbService.timeSlot.findMany({
             where: {
@@ -64,8 +66,45 @@ export class ExperienceService {
                     }
                 })
             }
-        }) 
+        })
 
         return slotsFormatted;
+    }
+
+    async getDatesForProduct(id: string): Promise<DateInventory> {
+        const res = await this.dbService.availableDate.findMany({
+            where: {
+                productId: parseInt(id),
+                date: {
+                    gte: new Date()
+                },
+            }
+        });
+        const formattedDates = res.map((date) => {
+            return {
+                date: date.date.toISOString().split('T')[0],
+                price: {
+                    finalPrice: date.finalPrice,
+                    currencyCode: date.currencyCode,
+                    originalPrice: date.originalPrice
+                }
+            }
+        });
+        return {
+            dates: formattedDates
+        };
+    }
+
+    async stopInventorySync() {
+        return this.fetcher.stopInventorySync();
+    }
+
+    async startInventorySync() {
+        return this.fetcher.startInventorySync();
+    }
+
+    async sync() {
+        this.fetcher.makeInitialFetch(15);
+        return;
     }
 }

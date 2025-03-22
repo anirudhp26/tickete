@@ -13,12 +13,19 @@ import { createKeyv, Keyv } from '@keyv/redis';
 import { CacheableMemory } from 'cacheable';
 import { seconds, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { BullModule } from '@nestjs/bullmq';
+import { FetcherProcessor } from './services/fetcher/fetcher.processor';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
+    }),
+    BullModule.forRoot({
+      connection: {
+        url: process.env.REDIS_URL,
+      }
     }),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
@@ -46,11 +53,14 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
       },
       isGlobal: true,
     }),
+    BullModule.registerQueue({
+      name: "jobs"
+    }),
     ScheduleModule.forRoot(),
     HttpModule
   ],
   controllers: [AppController, ExperienceController],
-  providers: [AppService, ExperienceService, FetcherService, DbService],
+  providers: [AppService, ExperienceService, FetcherService, DbService, FetcherProcessor],
 })
 
 export class AppModule {}
