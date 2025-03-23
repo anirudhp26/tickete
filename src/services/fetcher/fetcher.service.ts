@@ -62,7 +62,6 @@ export class FetcherService implements OnApplicationShutdown, OnModuleInit {
 
     async stopInventorySync() {
         this.logger.log('Stopping inventory sync');
-        this.schedulerRegistry.getCronJob('inventory-sync-5s').stop();
         this.schedulerRegistry.getCronJob('inventory-sync-15m').stop();
         this.schedulerRegistry.getCronJob('inventory-sync-4h').stop();
         this.schedulerRegistry.getCronJob('inventory-sync-1d').stop();
@@ -70,7 +69,6 @@ export class FetcherService implements OnApplicationShutdown, OnModuleInit {
 
     async startInventorySync() {
         this.logger.log('Starting inventory sync');
-        this.schedulerRegistry.getCronJob('inventory-sync-5s').start();
         this.schedulerRegistry.getCronJob('inventory-sync-15m').start();
         this.schedulerRegistry.getCronJob('inventory-sync-4h').start();
         this.schedulerRegistry.getCronJob('inventory-sync-1d').start();
